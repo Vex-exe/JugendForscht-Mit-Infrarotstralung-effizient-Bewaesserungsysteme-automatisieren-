@@ -18,8 +18,8 @@
 
   int Y_SP = 3; //Pins für den Y-Motor
   int Y_DP = 2;
-  const float Y_maxRotation = 60; //Maximale Rotation auf der Y-Achse
-  float Y_Rotation = 60;  //Rotation auf der Y-Achse
+  const float Y_maxRotation = 65; //Maximale Rotation auf der Y-Achse
+  float Y_Rotation = 65;  //Rotation auf der Y-Achse
   float Y_minRotation = 45;  //Minimale Rotation auf der Y-Achse
   bool Y_finished = false;  //Wurde die Rotation auf der Y-Achse vollständig durchgeführt?
 
@@ -30,7 +30,7 @@
   float Messradius;
   float xCoord;
   float yCoord;
-  float Hoehe = 1;
+  float Hoehe = 0.23;
 
   //Kommunikitation mit Python
   bool turnON = false;  //Soll die Messung laufen?
@@ -55,9 +55,9 @@
 
 void setup() {
   Serial.begin(9600);
-  StepperZ.setSpeed(500); //Legt die Geschwindigkeit der Stepper-Motoren fest
-  StepperY.setSpeed(500);
-  StepperA.setSpeed(500);
+  StepperZ.setSpeed(200); //Legt die Geschwindigkeit der Stepper-Motoren fest
+  StepperY.setSpeed(200);
+  StepperA.setSpeed(200);
 
   Servo1.attach(Serv_Pin1); //Weißt den Servo-Motoren ihre Pins zu
   Servo2.attach(Serv_Pin2);
@@ -84,7 +84,7 @@ void loop()
         calculate();  //Berechne den NDMI
         send(); //Sende die Werte an Python
         automate(); //Bewässere Stellen, deren NDMI zu niedrig ist
-        delay(500);
+        delay(100);
     }
 }
 
@@ -99,12 +99,12 @@ void stepRotate(){
   }
   
   if(Z_Rotation < 360 && R_Rotation == true && Y_finished == true){ //Soll sich der Z-Stepper nach rechts drehen & Hat seine Rotation weniger als 360 Grad & Hat der Y-Stepper seine Rotation bereits durchgeführt, dann...
-    StepperZ.step(4); //Rotiere um einen Step
+    StepperZ.step(12); //Rotiere um einen Step (12 Steps ergeben sich aus dem Zahnradverhältnis)
     Z_Rotation = Z_Rotation + GradProStep;  //Aktualisiere die Z-Rotation
     Y_finished = false; //Lasse den Y-Stepper wieder rotieren
   }
   else if(Z_Rotation > -360 && R_Rotation == false && Y_finished == true){  //Soll sich der Z-Stepper nach links drehen & Hat seine Rotation mehr als -360 Grad & Hat der Y-Stepper seine Rotation bereits durchgeführt, dann...
-    StepperZ.step(-4);  //Rotiere um einen Step
+    StepperZ.step(-12);  //Rotiere um einen Step (12 Steps ergeben sich aus dem Zahnradverhältnis)
     Z_Rotation = Z_Rotation - GradProStep;  //Aktualisiere die Z-Rotation
     Y_finished = false; //Lasse die Y-Stepper wieder rotieren
   }
@@ -114,7 +114,7 @@ void stepRotate(){
     Y_Rotation = Y_Rotation - GradProStep;  //Aktualisiere die Y-Rotation
   }
   else if(Y_Rotation <= Y_minRotation && Y_finished == false){  //Ist der Y-Stepper noch nicht fertig rotiert, hat aber eine Rotation kleiner gleich als die minimale Rotation, dann...
-    StepperY.step((Y_maxRotation- Y_Rotation/GradProStep) * -4);  //Rotiere zurück zur Ausgangsrotation
+    StepperY.step((Y_maxRotation- Y_Rotation/GradProStep) * -5.85);  //Rotiere zurück zur Ausgangsrotation
     Y_finished = true;  //Setze die Y-Rotation auf fertig
     Y_Rotation = Y_maxRotation; //Aktualisiere die Y-Rotation
   }
@@ -144,8 +144,11 @@ void send(){
 }
 
 void reset(){
-  StepperZ.step((Z_Rotation/StepsPerRev)*-4); //Lasse den Z-Motor zurück an seine Ursprungsposition laufen
-  StepperY.step((Y_maxRotation - Y_Rotation/GradProStep) *-4);  //Lasse den Y-Motor zurück an seine Ursprungsposition laufen
+  StepperZ.step((Z_Rotation/GradProStep)*-12); //Lasse den Z-Motor zurück an seine Ursprungsposition laufen
+  //StepperZ.step(-200);
+  delay(100);
+  StepperY.step((Y_maxRotation - Y_Rotation/GradProStep) *-5.85);  //Lasse den Y-Motor zurück an seine Ursprungsposition laufen
+  
   Y_Rotation = Y_maxRotation; //Setze die Y-Rotation zurück 
   Z_Rotation = 0; //Setze die Z-Rotation zurück 
 }
@@ -173,8 +176,7 @@ void automate(){
       delay(2000);
       Servo4.write(-90);
     }
-    StepperA.step((Z_Rotation/StepsPerRev)*-4); //Rotiere StepperA zurück in seine Ausgangsposition
+    StepperA.step((Z_Rotation/StepsPerRev)* -4); //Rotiere StepperA zurück in seine Ausgangsposition
     delay(1000);
   }
 }
-
