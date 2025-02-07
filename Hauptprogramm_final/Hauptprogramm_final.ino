@@ -114,7 +114,7 @@ void stepRotate(){
     Y_Rotation = Y_Rotation - GradProStep;  //Aktualisiere die Y-Rotation
   }
   else if(Y_Rotation <= Y_minRotation && Y_finished == false){  //Ist der Y-Stepper noch nicht fertig rotiert, hat aber eine Rotation kleiner gleich als die minimale Rotation, dann...
-    StepperY.step((Y_maxRotation- Y_Rotation/GradProStep) * -5.85);  //Rotiere zurück zur Ausgangsrotation
+    StepperY.step((Y_maxRotation- Y_Rotation/GradProStep) * -6.25);  //Rotiere zurück zur Ausgangsrotation
     Y_finished = true;  //Setze die Y-Rotation auf fertig
     Y_Rotation = Y_maxRotation; //Aktualisiere die Y-Rotation
   }
@@ -147,7 +147,7 @@ void reset(){
   StepperZ.step((Z_Rotation/GradProStep)*-12); //Lasse den Z-Motor zurück an seine Ursprungsposition laufen
   //StepperZ.step(-200);
   delay(100);
-  StepperY.step((Y_maxRotation - Y_Rotation/GradProStep) *-5.85);  //Lasse den Y-Motor zurück an seine Ursprungsposition laufen
+  StepperY.step((Y_maxRotation - Y_Rotation/GradProStep) *-6.25);  //Lasse den Y-Motor zurück an seine Ursprungsposition laufen
   
   Y_Rotation = Y_maxRotation; //Setze die Y-Rotation zurück 
   Z_Rotation = 0; //Setze die Z-Rotation zurück 
