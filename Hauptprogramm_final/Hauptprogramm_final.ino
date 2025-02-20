@@ -10,6 +10,8 @@
   //Stepper-Variablen
   int StepsPerRev = 400;  //Schritte pro 360-Grad-Umdrehung
   float GradProStep = 0.9;  //Winkelveränderung pro Schrizz
+  int A_StepsPerRev = 2038;
+  float A_Step = (2038/360);
 
   int Z_SP = 5; //Pins für den Z-Motor
   int Z_DP = 4;
@@ -30,7 +32,7 @@
   float Messradius;
   float xCoord;
   float yCoord;
-  float Hoehe = 1;
+  float Hoehe = 0.23;
 
   //Kommunikitation mit Python
   bool turnON = false;  //Soll die Messung laufen?
@@ -45,7 +47,8 @@
   //Stepper-Motoren
   Stepper StepperZ = Stepper(StepsPerRev, Z_DP, Z_SP);
   Stepper StepperY = Stepper(StepsPerRev, Y_DP, Y_SP);
-  Stepper StepperA = Stepper(StepsPerRev, A_DP, A_SP);
+  //Stepper StepperA = Stepper(A_StepsPerRev, 8, 9, 10, 11);
+  Stepper stepper(A_StepsPerRev, 8, 10, 9, 11);
 
   //Servo-Motoren
   Servo Servo1;
@@ -57,7 +60,6 @@ void setup() {
   Serial.begin(9600);
   StepperZ.setSpeed(100); //Legt die Geschwindigkeit der Stepper-Motoren fest
   StepperY.setSpeed(100);
-  StepperA.setSpeed(100);
 
   Servo1.attach(Serv_Pin1); //Weißt den Servo-Motoren ihre Pins zu
   Servo2.attach(Serv_Pin2);
@@ -67,23 +69,23 @@ void setup() {
 
 void loop()
 {
-    if (Serial.available() > 0){  //Wenn ein Signal am Seria Port verfügbar ist, dann...
-      msg = Serial.readString();  //Lese das Signal aus
-      if(msg == "ON"){  //Ist das Signal "ON", dann...
+  if (Serial.available() > 0){  //Wenn ein Signal am Seria Port verfügbar ist, dann...
+    msg = Serial.readString();  //Lese das Signal aus
+    if(msg == "ON"){  //Ist das Signal "ON", dann...
         turnON = true;  //Lasse die Messung laufen
       }
-      else if(msg == "OFF"){  //Ist das Signal "OFF", dann...
+    else if(msg == "OFF"){  //Ist das Signal "OFF", dann...
         turnON = false; //Stoppe die Messung
         reset();  //Setze die Motoren in ihre Ursprungsposition zurück
       }
     }
     if(turnON == true){ //Soll die Messung laufen, dann...
-        stepRotate(); //Rotire die Stepper
-        trigon(); //Berechne die Koordinaten des beobachteten Punktes
-        calculate();  //Berechne den NDMI
-        send(); //Sende die Werte an Python
-        automate(); //Bewässere Stellen, an denen der NDMI zu klein ist
-        delay(100);
+      stepRotate(); //Rotire die Stepper
+      trigon(); //Berechne die Koordinaten des beobachteten Punktes
+      calculate();  //Berechne den NDMI
+      send(); //Sende die Werte an Python
+      automate(); //Bewässere Stellen, an denen der NDMI zu klein ist
+      delay(100);
     }
 }
 
@@ -150,7 +152,9 @@ void reset(){
 
 void automate(){
   if(NDMI < minNDMI){ //Ist der NDMI unter dem mindestens erlaubten Wert, dann...
-    StepperA.step((Z_Rotation/StepsPerRev)*4);  //Rotiere StepperA zur aktuellen Z-Rotation
+    
+    stepper.setSpeed(6);
+    stepper.step(A_Step*Z_Rotation);
     if(Messradius <= 1.18){ //Prüfe, in welchem Abstand sich der Punkt befindet und führe die jeweilige if-Schleife aus
       Servo1.write(90); //Öffne das zugehörige Ventil...
       delay(2000);  //...für zwei Sekunden...
@@ -171,7 +175,8 @@ void automate(){
       delay(2000);
       Servo4.write(-90);
     }
-    StepperA.step((Z_Rotation/StepsPerRev)*-4); //Rotiere StepperA zurück in seine Ausgangsposition
+    stepper.setSpeed(6);
+    stepper.step(-A_Step*Z_Rotation*1.1);
     delay(1000);
   }
 }
