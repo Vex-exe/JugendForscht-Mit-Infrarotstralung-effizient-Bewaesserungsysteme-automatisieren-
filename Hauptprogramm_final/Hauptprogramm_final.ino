@@ -2,6 +2,8 @@
 #include <Servo.h>
 #define PI 3.1415926535897932384626433832795
   
+  int i = 0;
+  
   float NDMI; //Endziel, das ermittelt werden soll
   float minNDMI = -0.95;  //Minimal erlaubter NDMI-Wert, der zugelassen ist
   float Wert830;  //Wert der 830nm-Diode
@@ -84,7 +86,10 @@ void loop()
       trigon(); //Berechne die Koordinaten des beobachteten Punktes
       calculate();  //Berechne den NDMI
       send(); //Sende die Werte an Python
-      automate(); //Bewässere Stellen, an denen der NDMI zu klein ist
+      if(i == 5){
+        automate(); //Bewässere Stellen, an denen der NDMI zu klein ist
+        i = 0;
+      }
       delay(100);
     }
 }
@@ -103,11 +108,13 @@ void stepRotate(){
     StepperZ.step(-16); //Rotiere um einen Grad
     Z_Rotation = Z_Rotation + GradProStep;  //Aktualisiere die Z-Rotation
     Y_finished = false; //Lasse den Y-Stepper wieder rotieren
+    i++;
   }
   else if(Z_Rotation > -360 && R_Rotation == false && Y_finished == true){  //Soll sich der Z-Stepper nach links drehen & Hat seine Rotation mehr als -360 Grad & Hat der Y-Stepper seine Rotation bereits durchgeführt, dann...
     StepperZ.step(16);  //Rotiere um einen Step
     Z_Rotation = Z_Rotation - GradProStep;  //Aktualisiere die Z-Rotation
     Y_finished = false; //Lasse die Y-Stepper wieder rotieren
+    i++;
   }
 
   if(Y_Rotation > Y_minRotation && Y_finished == false){  //Ist der Y-Stepper noch nicht ferig rotiert, dann...
